@@ -63,6 +63,8 @@ fn shortcuts(target: &Path, remove: bool) -> bool {
     ))
 }
 
+/// Only for failures. The console closes on its own after a good install, and
+/// an error that vanishes with the window is no better than none.
 fn pause(message: &str) {
     println!("\n{message}");
     let _ = std::io::stdout().flush();
@@ -129,17 +131,11 @@ fn install() {
 
     println!("\n  Done. {PRODUCT} is installed at:");
     println!("  {}", dir.display());
-    println!("\n  The shortcut is on your Desktop.");
+    println!("  The shortcut is on your Desktop. Opening it now.");
 
-    print!("\n  Open it now? [Y/n] ");
-    let _ = std::io::stdout().flush();
-    let mut answer = String::new();
-    let _ = std::io::stdin().read_line(&mut answer);
-    if !answer.trim().eq_ignore_ascii_case("n") {
-        let mut cmd = Command::new(&target);
-        cmd.current_dir(&dir);
-        let _ = cmd.spawn();
-    }
+    let mut cmd = Command::new(&target);
+    cmd.current_dir(&dir);
+    let _ = cmd.spawn();
 }
 
 fn settings_dir() -> Option<PathBuf> {

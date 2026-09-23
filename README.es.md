@@ -12,6 +12,8 @@ Doble click en el instalador que quieras. Hace todo solo:
 
 Podes instalar las dos a la vez sin que se pisen: cada una va a su propia carpeta y tiene su propio acceso directo.
 
+La primera vez Windows muestra "Windows protegio su PC": el instalador no esta firmado con un certificado pago, asi que SmartScreen no lo conoce. Toca **Mas informacion** y despues **Ejecutar de todas formas**. Se abre una consola, instala, abre la app y se cierra sola.
+
 Cada instalador copia la app a `%LOCALAPPDATA%\Programs\`, crea el acceso directo en el Escritorio y en el menu Inicio, y la registra en **Agregar o quitar programas**. No pide permisos de administrador ni toca nada del sistema.
 
 Para saber cual estas usando, mirala en la barra de titulo: dice **Snag · egui** o **Snag · Tauri**.

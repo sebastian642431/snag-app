@@ -21,8 +21,9 @@ live progress, show the running version in the title bar, and check GitHub
 for a newer release: the banner can be put off until the next launch, and the
 Tools panel always lists Snag itself with a "Get it" button when one exists.
 
-The installers create shortcuts, register under Add/Remove Programs, and
-uninstall without touching what you downloaded.
+The installers create shortcuts, register under Add/Remove Programs, open the
+app and close on their own; they only wait for a key when something failed.
+Uninstalling leaves what you downloaded untouched.
 
 Tests cover version comparison, what a winget exit code means, the yt-dlp
 command line per mode, yt-dlp and winget output parsing, the release check,

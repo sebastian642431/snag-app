@@ -23,6 +23,8 @@ Each installer carries the app inside it and, on a double-click, copies it to `%
 
 Both builds can be installed side by side. The title bar tells you which one you're looking at.
 
+Windows will show "Windows protected your PC" the first time: the installer is not signed with a paid certificate, so SmartScreen has no reputation for it. Click **More info**, then **Run anyway**. The installer opens a console, does its work, opens the app and closes on its own.
+
 ## Requirements
 
 Snag drives two external programs and does no networking of its own:
