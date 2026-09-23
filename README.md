@@ -87,7 +87,7 @@ git tag -a v1.0.2 -m "Snag 1.0.2"
 git push origin v1.0.2
 ```
 
-The tag starts three jobs at once: the checks, and one build per app, each with its own cache and installer. Publishing waits for all three, refuses to continue if the tag and the workspace version disagree, then creates the release and attaches `Install-Snag-egui.exe` and `Install-Snag-tauri.exe`. Nothing is published by hand. A cold run takes about five minutes; with warm caches, less.
+The tag starts three jobs at once: the checks, and one build per app, each with its own cache and installer. Publishing waits for all three, refuses to continue if the tag and the workspace version disagree, then creates the release and attaches `Install-Snag-egui.exe` and `Install-Snag-tauri.exe`. Nothing is published by hand. The same two builds also run on every push to `main` without publishing: GitHub only lets a run restore caches from its own ref or the default branch, so that is what keeps the next tag warm. A cold run takes about five minutes; with warm caches, less.
 
 ## How it works
 

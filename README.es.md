@@ -89,7 +89,7 @@ git tag -a v1.0.2 -m "Snag 1.0.2"
 git push origin v1.0.2
 ```
 
-El tag lanza tres trabajos a la vez: los checks y una compilacion por app, cada una con su cache y su instalador. Publicar espera a los tres, se niega a seguir si el tag no coincide con la version del workspace, y si pasa crea el release y le adjunta `Install-Snag-egui.exe` e `Install-Snag-tauri.exe` solo. En frio tarda unos cinco minutos; con cache, menos.
+El tag lanza tres trabajos a la vez: los checks y una compilacion por app, cada una con su cache y su instalador. Publicar espera a los tres, se niega a seguir si el tag no coincide con la version del workspace, y si pasa crea el release y le adjunta `Install-Snag-egui.exe` e `Install-Snag-tauri.exe` solo. Las mismas dos compilaciones corren tambien en cada push a `main` sin publicar nada: GitHub solo deja que un run use la cache de su propia rama o de la principal, y eso es lo que mantiene tibio el siguiente tag. En frio tarda unos cinco minutos; con cache, menos.
 
 **Importante:** si movés o renombrás una de estas carpetas, corré `cargo clean` adentro antes de volver a compilar. El compilador guarda rutas absolutas y falla si la carpeta cambió de sitio.
 
