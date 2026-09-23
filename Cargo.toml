@@ -1,0 +1,21 @@
+[workspace]
+resolver = "2"
+members = ["core", "app-egui", "app-tauri", "installer"]
+
+[workspace.package]
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/sebastian642431/snag-app"
+
+[workspace.dependencies]
+snag-core = { path = "core" }
+
+[profile.release]
+opt-level = "s"
+# Thin LTO with the default 16 codegen units: measured against fat LTO with a
+# single unit, a cold build takes a third less and a one-line change 60% less,
+# for 9% larger binaries. Dropping LTO entirely barely gains time and costs
+# 44% in size.
+lto = "thin"
+strip = true

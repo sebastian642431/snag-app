@@ -1,0 +1,17 @@
+[package]
+name = "snag-egui"
+description = "Snag, the light build: a single process drawing its own interface."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+build = "build.rs"
+
+[target.'cfg(windows)'.build-dependencies]
+embed-resource = "3"
+
+[dependencies]
+snag-core.workspace = true
+eframe = { version = "0.36", default-features = false, features = ["glow", "default_fonts", "accesskit", "links"] }
+egui = "0.36"
+rfd = "0.17"

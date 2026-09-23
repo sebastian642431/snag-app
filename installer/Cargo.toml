@@ -1,0 +1,18 @@
+[package]
+name = "snag-installer"
+description = "Carries one Snag build inside it and installs it into the user profile."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+build = "build.rs"
+
+[target.'cfg(windows)'.build-dependencies]
+embed-resource = "3"
+
+[[bin]]
+name = "snag-setup"
+path = "src/main.rs"
+
+[dependencies]
+snag-core.workspace = true

@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Snag</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="titlebar" data-tauri-drag-region>
+    <div class="brand" data-tauri-drag-region>
+      <svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0 4-4m-4 4-4-4M5 19h14"/></svg>
+      <span id="brand">Snag · Tauri</span>
+    </div>
+    <div class="winbtns">
+      <button id="min" class="wb" title="Minimize" aria-label="Minimize window">
+        <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6h7"/></svg>
+      </button>
+      <button id="max" class="wb" title="Maximize" aria-label="Maximize or restore window">
+        <svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2.5" y="2.5" width="7" height="7" rx="1.2"/></svg>
+      </button>
+      <button id="close" class="wb danger" title="Close" aria-label="Close window">
+        <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 3l6 6M9 3l-6 6"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <main>
+    <section class="hero">
+      <h1>Paste a link</h1>
+      <p class="lead">Grab the audio as MP3, or the whole video.</p>
+
+      <div class="field" id="field">
+        <svg class="fi" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a4 4 0 0 0 5.6.6l3-3a4 4 0 0 0-5.6-5.6l-1.2 1.2M14 11a4 4 0 0 0-5.6-.6l-3 3a4 4 0 0 0 5.6 5.6l1.2-1.2"/></svg>
+        <label for="url" class="sr-only">Link to download</label>
+        <input id="url" type="text" placeholder="https://..." spellcheck="false" autocomplete="off" aria-describedby="url-hint">
+      </div>
+      <p class="hint" id="url-hint" role="alert"></p>
+
+      <div class="row">
+        <div class="seg" role="radiogroup" aria-label="Format">
+          <button class="segb on" role="radio" aria-checked="true" tabindex="0" data-mode="mp3">MP3</button>
+          <button class="segb" role="radio" aria-checked="false" tabindex="-1" data-mode="video">Video</button>
+        </div>
+        <button id="go" class="cta">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0 4-4m-4 4-4-4M5 19h14"/></svg>
+          Download
+        </button>
+      </div>
+
+      <div class="folder">
+        <svg class="ficon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h4l2 2.5h7A1.5 1.5 0 0 1 19 10v7a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 3 17z"/></svg>
+        <span class="sr-only">Download folder:</span>
+        <span class="fpath" id="out"></span>
+        <button class="ghost" id="openf" aria-label="Open download folder">Open</button>
+        <button class="ghost" id="pickf" aria-label="Change download folder">Change</button>
+      </div>
+
+      <section class="upd" id="upd" hidden aria-labelledby="upd-title">
+        <div class="upd-meta">
+          <div class="upd-title" id="upd-title"></div>
+          <div class="upd-lead" id="upd-lead"></div>
+        </div>
+        <div class="upd-actions">
+          <button class="tool-btn" id="upd-later">Later</button>
+          <button class="tool-btn primary" id="upd-get">Get it</button>
+        </div>
+      </section>
+
+      <section class="deps" id="deps" hidden aria-labelledby="deps-title">
+        <div class="deps-head">
+          <div class="deps-title" id="deps-title">Missing tools</div>
+          <button class="tool-btn" id="deps-all" hidden>Update all</button>
+        </div>
+        <p class="deps-lead" id="deps-lead">Snag does not download on its own. It drives these two tools.</p>
+        <div id="deps-rows"></div>
+        <div class="dep">
+          <div class="dep-head">
+            <div class="dep-meta">
+              <div class="dep-name">Snag</div>
+              <div class="dep-what ver" id="self-version"></div>
+            </div>
+            <div class="dep-action">
+              <span class="dep-status good" id="self-status"></span>
+              <button class="tool-btn" id="self-get" hidden aria-label="Get the new Snag version">Get it</button>
+            </div>
+          </div>
+        </div>
+        <p class="deps-note" id="deps-note"></p>
+      </section>
+    </section>
+
+    <section class="list" id="list" aria-label="Downloads"></section>
+
+    <div class="empty" id="empty">
+      <div class="eicon">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V6l10-2v12M9 18a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Zm10-2a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Z"/></svg>
+      </div>
+      <p>Nothing downloaded yet</p>
+      <span>Paste a link above and press Enter.</span>
+    </div>
+  </main>
+
+  <div class="sr-only" id="announce" aria-live="polite"></div>
+
+  <footer>
+    <span class="ind" id="ind-yt"><i aria-hidden="true"></i><em>yt-dlp</em></span>
+    <span class="ind" id="ind-ff"><i aria-hidden="true"></i><em>ffmpeg</em></span>
+    <button class="tools-toggle" id="tools-toggle" hidden aria-expanded="false" aria-controls="deps"><span>Tools</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

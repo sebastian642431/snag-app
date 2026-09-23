@@ -1,0 +1,7 @@
+[package]
+name = "snag-core"
+description = "Shared logic between the Snag builds: tool discovery, settings, output parsing."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true

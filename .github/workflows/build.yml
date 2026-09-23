@@ -1,0 +1,142 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    name: format, lint and tests
+    runs-on: windows-latest
+
+    # The installer picks its payload at compile time, so it needs these to
+    # build at all. Any existing file will do here: nothing is ever executed,
+    # only compiled. They belong to the whole job because both the lint and
+    # the test steps compile that crate.
+    env:
+      PAYLOAD_EXE: ${{ github.workspace }}/LICENSE
+      PRODUCT_NAME: Snag check
+      EXE_NAME: snag-check.exe
+      APP_VERSION: 0.0.0
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            target
+          key: ${{ runner.os }}-cargo-check-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-check-
+
+      - name: Formatting
+        run: cargo fmt --all -- --check
+
+      - name: Lint
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Tests
+        run: cargo test --workspace
+
+  # One runner per app. The two builds share nothing but the core crate, so
+  # running them side by side halves the wall time, and each keeps a cache of
+  # its own size instead of one cache holding both.
+  build:
+    name: build ${{ matrix.app }}
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: windows-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: egui
+            crate: snag-egui
+            product: Snag egui
+            exe: Snag-egui.exe
+          - app: tauri
+            crate: snag-tauri
+            product: Snag Tauri
+            exe: Snag-tauri.exe
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            target
+          key: ${{ runner.os }}-cargo-${{ matrix.app }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-${{ matrix.app }}-
+
+      - name: Check the tag matches the workspace version
+        run: |
+          $tag = $env:GITHUB_REF_NAME -replace '^v', ''
+          $declared = (Select-String -Path Cargo.toml -Pattern '^version = "(.+)"' | Select-Object -First 1).Matches[0].Groups[1].Value
+          Write-Host "tag=$tag  Cargo.toml=$declared"
+          if ($declared -ne $tag) {
+            Write-Host "::error::Tag $tag does not match the workspace version $declared."
+            exit 1
+          }
+
+      - name: Build the app
+        run: cargo build --release -p ${{ matrix.crate }}
+
+      - name: Build the installer
+        env:
+          APP_VERSION: ${{ github.ref_name }}
+          PAYLOAD_EXE: ${{ github.workspace }}\target\release\${{ matrix.crate }}.exe
+          PRODUCT_NAME: ${{ matrix.product }}
+          EXE_NAME: ${{ matrix.exe }}
+        run: |
+          $env:APP_VERSION = $env:APP_VERSION -replace '^v', ''
+          cargo build --release -p snag-installer
+          # No space in the name: GitHub turns it into a dot when attaching.
+          Copy-Item target/release/snag-setup.exe "Install-${{ matrix.exe }}"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: installer-${{ matrix.app }}
+          path: Install-${{ matrix.exe }}
+          if-no-files-found: error
+
+  release:
+    name: publish
+    needs: [check, build]
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: installer-*
+          merge-multiple: true
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          tag="$GITHUB_REF_NAME"
+          if gh release view "$tag" > /dev/null 2>&1; then
+            echo "Release $tag already exists, replacing the installers"
+            gh release upload "$tag" Install-Snag-egui.exe Install-Snag-tauri.exe --clobber
+          else
+            echo "Creating release $tag"
+            gh release create "$tag" --title "Snag $tag" --generate-notes Install-Snag-egui.exe Install-Snag-tauri.exe
+          fi
