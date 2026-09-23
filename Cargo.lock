@@ -4476,11 +4476,11 @@ dependencies = [
 
 [[package]]
 name = "snag-core"
-version = "1.0.0"
+version = "1.0.1"
 
 [[package]]
 name = "snag-egui"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "eframe",
  "egui",
@@ -4491,7 +4491,7 @@ dependencies = [
 
 [[package]]
 name = "snag-installer"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "embed-resource",
  "snag-core",
@@ -4499,7 +4499,7 @@ dependencies = [
 
 [[package]]
 name = "snag-tauri"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "rfd",
  "serde",
