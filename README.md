@@ -8,8 +8,8 @@ Two builds of the same app ship here, sharing identical download logic and diffe
 
 | | Processes | RAM idle | Binary |
 | --- | --- | --- | --- |
-| **Snag · egui** | 1 | ~70 MB | 5.0 MB |
-| **Snag · Tauri** | 7 | ~369 MB | 5.9 MB |
+| **Snag · egui** | 1 | ~70 MB | 6.9 MB |
+| **Snag · Tauri** | 7 | ~369 MB | 6.6 MB |
 
 Measured on Windows 11 with an empty download queue. The Tauri build embeds a Chromium engine through WebView2, which is where the difference comes from. **Use the egui build unless you have a reason not to.**
 
@@ -21,7 +21,7 @@ Grab an installer from [Releases](../../releases) and run it. No admin rights ne
 
 Each installer carries the app inside it and, on a double-click, copies it to `%LOCALAPPDATA%\Programs\`, creates Desktop and Start Menu shortcuts, and registers the app under **Add or remove programs**. Nothing is written outside your user profile.
 
-Both builds can be installed side by side. The title bar tells you which one you're looking at.
+Both builds can be installed side by side. The title bar tells you which one you're looking at, and which version.
 
 Windows will show "Windows protected your PC" the first time: the installer is not signed with a paid certificate, so SmartScreen has no reputation for it. Click **More info**, then **Run anyway**. The installer opens a console, does its work, opens the app and closes on its own.
 
@@ -35,6 +35,8 @@ winget install Gyan.FFmpeg      # extracts MP3, merges video + audio
 ```
 
 Neither is bundled, and neither needs a terminal: the **Tools** panel in the window installs what is missing through winget, shows the version of what is there, and updates either one (or both, with **Update all**) in a click. Snag looks for them on `PATH` first, then inside WinGet's package folders, so a stale `PATH` in an open terminal won't break it. Two status dots at the bottom of the window carry the same versions.
+
+The same panel lists Snag itself. On startup the app asks GitHub for the newest release; if there is one, a banner offers it, **Later** hides the banner until the next launch, and the Tools row keeps a **Get it** button, so an update can be put off but never lost.
 
 Downloads land in `Downloads\yt-dlp`, changeable from the app.
 
@@ -78,27 +80,27 @@ cargo test --workspace
 
 ## Releasing
 
-Versions live in one place: `version` in the root `Cargo.toml`. Every crate inherits it.
-
-Bump it, commit, then tag and push:
+The version lives in `version` in the root `Cargo.toml`, which every crate inherits, and once more in `app-tauri/tauri.conf.json`, which Tauri reads for its bundle metadata and CI does not check. Change both, add the entry to `CHANGELOG.md`, commit, then tag and push:
 
 ```powershell
-git tag v1.0.1
-git push origin v1.0.1
+git tag -a v1.0.2 -m "Snag 1.0.2"
+git push origin v1.0.2
 ```
 
-The tag triggers a build that refuses to continue if the tag and the workspace version disagree, then creates the release and attaches both installers. Nothing is published by hand.
+The tag starts three jobs at once: the checks, and one build per app, each with its own cache and installer. Publishing waits for all three, refuses to continue if the tag and the workspace version disagree, then creates the release and attaches `Install-Snag-egui.exe` and `Install-Snag-tauri.exe`. Nothing is published by hand. A cold run takes about five minutes; with warm caches, less.
 
 ## How it works
 
 | Folder | Contents |
 | --- | --- |
 | `core/` | Everything both builds need: tool discovery, settings, output parsing, and the runs of winget, yt-dlp and the release check. Where the tests live |
-| `app-egui/` | The light build. Rust + [egui](https://github.com/emilk/egui), immediate-mode GUI drawn with OpenGL |
+| `app-egui/` | The light build. Rust + [egui](https://github.com/emilk/egui), immediate-mode GUI drawn with OpenGL. Split by responsibility: theme, paint, widgets, install, download, and one file per view under `app/` |
 | `app-tauri/` | The web build. Rust + [Tauri](https://tauri.app), interface in plain HTML/CSS/JS, no bundler |
 | `installer/` | Embeds an app with `include_bytes!` and installs it. One build per app |
 
-Both apps spawn `yt-dlp` with `--newline`, read its stdout line by line, and parse the `[download] 42.3%` output into the progress bars. Each download runs on its own thread, so several links can go at once without blocking the window.
+Both apps hand a link to `core`, which spawns `yt-dlp` with `--newline`, reads its stdout line by line, and turns the `[download] 42.3%` output into events; each app only decides how to draw them. Each download runs on its own thread, so several links can go at once without blocking the window. Running winget and checking for a release work the same way.
+
+The release profile uses thin LTO: measured against fat LTO with one codegen unit, a cold build takes a third less and a small change 60% less, for binaries 9% larger.
 
 The egui build loads Segoe UI from `C:\Windows\Fonts` at runtime rather than bundling a font, which keeps the binary small and avoids redistributing a font that isn't ours to ship. Gradients, glows and the rounded progress bars are drawn as triangle meshes, since egui has no CSS.
 

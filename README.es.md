@@ -16,7 +16,7 @@ La primera vez Windows muestra "Windows protegio su PC": el instalador no esta f
 
 Cada instalador copia la app a `%LOCALAPPDATA%\Programs\`, crea el acceso directo en el Escritorio y en el menu Inicio, y la registra en **Agregar o quitar programas**. No pide permisos de administrador ni toca nada del sistema.
 
-Para saber cual estas usando, mirala en la barra de titulo: dice **Snag · egui** o **Snag · Tauri**.
+Para saber cual estas usando, mirala en la barra de titulo: dice **Snag · egui** o **Snag · Tauri**, y la version.
 
 ## Sin ventana
 
@@ -35,6 +35,8 @@ Borra la app, los accesos directos y el registro. No toca los archivos que desca
 
 No hace falta abrir una terminal: el panel **Tools** de la ventana los instala con winget si faltan, te muestra la version de cada uno y los actualiza de a uno o los dos juntos con **Update all**. La app los busca sola en el PATH y, si no estan, en las carpetas de winget. Los dos puntitos de abajo muestran la version instalada: verde es que esta, rojo es que falta.
 
+En el mismo panel aparece Snag. Al abrirse, la app consulta en GitHub si hay una version mas nueva; si la hay, un cartel la ofrece, **Later** lo esconde hasta la proxima vez que abras, y la fila de Snag en Tools conserva el boton **Get it**. Se puede postergar, no perder.
+
 Los archivos descargados van a `Downloads\yt-dlp`, y podes cambiar esa carpeta desde la app.
 
 ## Carpetas
@@ -42,7 +44,7 @@ Los archivos descargados van a `Downloads\yt-dlp`, y podes cambiar esa carpeta d
 | Carpeta | Que hay |
 | --- | --- |
 | `core\` | Todo lo que las dos apps comparten: encontrar las herramientas, los ajustes, el parseo, y correr winget, yt-dlp y la busqueda de actualizaciones. Aca viven los tests |
-| `app-egui\` | Codigo de la version liviana. Rust + egui |
+| `app-egui\` | Codigo de la version liviana. Rust + egui. Separado por responsabilidad: tema, dibujo, widgets, instalacion, descarga, y una vista por archivo en `app\` |
 | `app-tauri\` | Codigo de la version web. Rust + Tauri, interfaz en HTML/CSS |
 | `installer\` | Codigo del instalador. Se compila una vez por cada app, con la app embebida adentro |
 
@@ -80,19 +82,17 @@ cargo test --workspace
 
 ## Publicar una version
 
-La version esta en un solo lugar: el `Cargo.toml` de la raiz. Los cuatro crates la heredan.
-
-La cambias ahi, commiteas, y despues:
+La version esta en el `Cargo.toml` de la raiz, que los cuatro crates heredan, y repetida en `app-tauri\tauri.conf.json`, que Tauri usa para sus metadatos y el CI no revisa. Cambias las dos, agregas la entrada en `CHANGELOG.md`, commiteas, y despues:
 
 ```
-git tag v1.0.1
-git push origin v1.0.1
+git tag -a v1.0.2 -m "Snag 1.0.2"
+git push origin v1.0.2
 ```
 
-El tag dispara el build, que se niega a seguir si el tag no coincide con la version del workspace. Si pasa, crea el release y le adjunta los dos instaladores solo.
+El tag lanza tres trabajos a la vez: los checks y una compilacion por app, cada una con su cache y su instalador. Publicar espera a los tres, se niega a seguir si el tag no coincide con la version del workspace, y si pasa crea el release y le adjunta `Install-Snag-egui.exe` e `Install-Snag-tauri.exe` solo. En frio tarda unos cinco minutos; con cache, menos.
 
 **Importante:** si movés o renombrás una de estas carpetas, corré `cargo clean` adentro antes de volver a compilar. El compilador guarda rutas absolutas y falla si la carpeta cambió de sitio.
 
 ## Espacio
 
-Las carpetas `target\` son del compilador y se regeneran solas. Ocupan varios GB. Para recuperar espacio, `cargo clean` dentro de cada una, con VS Code cerrado.
+La carpeta `target\` de la raiz es del compilador y se regenera sola. Ocupa varios GB. Para recuperar espacio, `cargo clean` desde la raiz, con VS Code cerrado.
